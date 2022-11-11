@@ -7,4 +7,11 @@
 /dataSources/
 /dataSources.local.xml
 
-.idea/*
+/.idea/*
+/codeStyles/codeStyleConfig.xml
+/discord.xml
+/LMC_PROLOG.iml
+/misc.xml
+/modules.xml
+/codeStyles/Project.xml
+/vcs.xml
