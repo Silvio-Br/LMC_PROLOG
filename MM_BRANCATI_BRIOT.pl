@@ -1,3 +1,5 @@
+:- style_check(-singleton).
+
 % Définition de l'opérateur ?=
 :- op(20,xfy,?=).
 
@@ -83,10 +85,14 @@ reduit(R, E, P, Q) :- regle(E, R), app(R,E,P,Q), !.
 union_list([X|A], [Y|B], C) :- union_list(A, B, D), append([X?=Y], D, C).
 union_list([], [], C) :- C=[].
 
-unifie([X|L]) :- reduit(decomposition, X, L, R), unifie(R).
-unifie([]) :- echo('Terminé').
+unifie([X|L]) :- reduit(decompose, X, L, R), write('Resultat : '), write(R), unifie(L).
+unifie([]) :- write('\nTermine\n').
+
+
+
+
+main :- write('Unification de : [f(c,d)?=f(a,b)]\n'),
+        unifie([f(c,d)?=f(a,b)]).
 
 % Lance le programme
-:- initialization main.
-
-main :- unifie([f(c,d)?=f(a,b)]).
+:- main.
