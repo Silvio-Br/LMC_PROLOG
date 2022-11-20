@@ -111,6 +111,7 @@ choix_premier(P, Q, E, R) :- reduit(R, E, P, Q).
 
 % Stratégies de choix pondérés
 % choix pondéré 1
+choix_pondere_1([], Q, E, R) :- choix_reduit_1(E, R, _), reduit(R, E, [], Q).
 choix_pondere_1(P, Q, E, R) :- parcours_liste_1(P, E, C, L), choix_reduit_1(C, R, _), reduit(R, C, L, Q).
 
 
@@ -131,7 +132,7 @@ regle(E, expand), P=1, R='expand', !.
 %Comparaison des equations pour le choix pondéré 1
 %Si les deux équations sont de poids différents, on choisit celle qui a le plus grand poids
 %Si les deux équations sont de poids identiques, on choisit la première
-compare_equation_1(E1, E2, E, O):- choix_reduit_1(E1, _, P1), choix_reduit_1(E2, _, P2), P1>=P2, E=E1, O=E2, !; E=E2, O=E1.
+compare_equation_1(E1, E2, E, O):- choix_reduit_1(E1, _, P1), choix_reduit_1(E2, _, P2), P1>=P2, E=E1, O=[E2], !; E=E2, O=[E1].
 
 %Comparaison des equations pour le choix pondéré 2
 %Si les deux équations sont de poids différents, on choisit celle qui a le plus grand poids
@@ -146,7 +147,7 @@ parcours_liste_1([E1|P], E2, E, L):- parcours_liste_1(P, E2, E3, L2), compare_eq
 
 
 
-main :- unifie([f(X)?=f(a), X?=a], choix_pondere_1).
+main :- unifie([f(Y)?=f(X), X?=a], choix_pondere_1).
 
 % Lance le programme
 :- trace, main.
