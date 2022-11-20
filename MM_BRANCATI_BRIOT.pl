@@ -55,29 +55,29 @@ occur_check(X, T) :- compound(T), var(X), arg(_,T,V), (V==X ; (compound(V), occu
 
 % application de la regle rename
 % remplacement des occurrences de la variable X par la variable T
-reduit(rename, E, P, Q) :- regle(E, rename), arg(1, E, X), arg(2, E, T), Q=P, X=T, !.
+reduit(rename, E, P, Q) :- echo('rename: '), echo(E), nl, regle(E, rename), arg(1, E, X), arg(2, E, T), Q=P, X=T, !.
 
 % application de la regle simplify
 % remplacement des occurrences de la variable X par la constante T
-reduit(simplify, E, P, Q) :- regle(E, simplify), arg(1, E, X), arg(2, E, T), X=T, Q=P, !.
+reduit(simplify, E, P, Q) :- echo('simplify: '), echo(E), nl, regle(E, simplify), arg(1, E, X), arg(2, E, T), X=T, Q=P, !.
 
 % application de la regle expand
 % remplacement des occurrences de la variable X par la fonction T
-reduit(expand, E, P, Q) :- regle(E, expand), arg(1, E, X), arg(2, E, T), X=T, Q=P, !.
+reduit(expand, E, P, Q) :- echo('expand: '), echo(E), nl, regle(E, expand), arg(1, E, X), arg(2, E, T), X=T, Q=P, !.
 
 % application de la regle orient
 % inverse T et X
-reduit(orient, E, P, Q) :- regle(E, orient), arg(1, E, T), arg(2, E, X), append([X?=T], P, Q), !.
+reduit(orient, E, P, Q) :- echo('orient: '), echo(E), nl, regle(E, orient), arg(1, E, T), arg(2, E, X), append([X?=T], P, Q), !.
 
 % application de la regle decompose
 % decompose les fonctions X et T en une liste d'équations
-reduit(decompose, E, P, Q) :- regle(E, decompose), arg(1, E, X), arg(2, E, T), X=..[_|L], T=..[_|K], union_list(L, K, R), append(R, P, Q), !.
+reduit(decompose, E, P, Q) :- echo('decompose: '), echo(E), nl, regle(E, decompose), arg(1, E, X), arg(2, E, T), X=..[_|L], T=..[_|K], union_list(L, K, R), append(R, P, Q), !.
 
 % application de la regle clash
-reduit(clash, _, _, _) :- fail.
+reduit(clash, E, _, _) :- echo('clash: '), echo(E), nl, fail.
 
 % application de la regle check
-reduit(check, _, _, _) :- fail.
+reduit(check, E, _, _) :- echo('check: '), echo(E), nl, fail.
 
 % union_list
 % union des termes de deux listes pour appliquer la regle decompose
@@ -91,19 +91,20 @@ union_list([], [], C) :- C=[].
 % unifie([]) : termine l'éxécution du programme
 
 unifie([E|P], choix_premier) :- choix_premier(P, Q, E, _), !, unifie(Q, choix_premier).
-unifie([E|P], choix_pondere_1) :- choix_pondere_1(P, Q, E, _), !, unifie(Q, choix_pondere_1).
-%unifie([E|P], choix_pondere_2) :- reduit(S, E, P, Q), unifie(P, S).
+unifie([E|P], choix_pondere_1) :- echo('system:'), echo([E|P]), nl, choix_pondere_1(P, Q, E, _), !, unifie(Q, choix_pondere_1).
+unifie([E|P], choix_pondere_2) :- echo('system:'), echo([E|P]), nl, choix_pondere_2(P, Q, E, _), !, unifie(Q, choix_pondere_2).
 
-unifie([], _) :- write('\nTermine\n').
+
+unifie([], _) :- write('Yes').
 
 %Unifie avec un seul parametre (choix_premier)
 unifie([E|P]) :- choix_premier(P, Q, E, _), !, unifie(Q).
-unifie([]) :- write('\nTermine\n').
+unifie([]) :- write('Yes').
 
 
 % Les différentes stratégies possibles pour le résolution de l'équation
 
-choix_premier([], Q, [], R) :- write('terminé'), !.
+choix_premier([], Q, [], R).
 
 % Stratégie de choix premier
 % choix_premier(P, Q, E, R)
@@ -116,17 +117,29 @@ choix_pondere_1(P, Q, E, R) :- parcours_liste_1(P, E, C, L), choix_reduit_1(C, R
 
 
 % choix pondéré 2
-%choix_pondere_2(P, Q, E, R) :-
+choix_pondere_2([], Q, E, R) :- choix_reduit_2(E, R, _), reduit(R, E, [], Q).
+choix_pondere_2(P, Q, E, R) :- parcours_liste_2(P, E, C, L), choix_reduit_2(C, R, _), reduit(R, C, L, Q).
 
 %Choix de la règle à appliquer avec poids
 %E représente l'équation à résoudre
 %P représente le poids de la règle
+
+% clash > check > rename > simplify > orient > expand > decompose
 choix_reduit_1(E, R, P):- regle(E, clash), P=7, R='clash', !;
 regle(E, check), P=6, R='check', !;
 regle(E, rename), P=5, R='rename', !;
 regle(E, simplify), P=4, R='simplify', !;
 regle(E, orient), P=3, R='orient', !;
-regle(E, decompose), P=2, R='decompose', !;
+regle(E, expand), P=2, R='expand', !;
+regle(E, decompose), P=1, R='decompose', !.
+
+% clash > check > decompose > orient > rename > simplify > expand
+choix_reduit_2(E, R, P):- regle(E, clash), P=7, R='clash', !;
+regle(E, check), P=6, R='check', !;
+regle(E, decompose), P=5, R='decompose', !;
+regle(E, orient), P=4, R='orient', !;
+regle(E, rename), P=3, R='rename', !;
+regle(E, simplify), P=2, R='simplify', !;
 regle(E, expand), P=1, R='expand', !.
 
 %Comparaison des equations pour le choix pondéré 1
@@ -137,17 +150,42 @@ compare_equation_1(E1, E2, E, O):- choix_reduit_1(E1, _, P1), choix_reduit_1(E2,
 %Comparaison des equations pour le choix pondéré 2
 %Si les deux équations sont de poids différents, on choisit celle qui a le plus grand poids
 %Si les deux équations sont de poids identiques, on choisit la première
-compare_equation_2(E1, E2, E, O):- choix_reduit_2(E1, _, P1), choix_reduit_2(E2, _, P2), P1>=P2, E=E1, !, E=E2.
+compare_equation_2(E1, E2, E, O):- choix_reduit_2(E1, _, P1), choix_reduit_2(E2, _, P2), P1>=P2, E=E1, O=[E2], !; E=E2, O=[E1].
 
 %Parcour de la liste des équations pour le choix pondéré 1
-%Si la liste est vide, on retourne l'équation
-%Si la liste n'est pas vide, on compare les équations
+%Si la liste à un seul élément, on compare les équations
+%Si la liste à plusieurs éléments, on compare les équations et on parcour la liste jusqu'à la fin
 parcours_liste_1([E1|[]], E2, E, L) :- compare_equation_1(E1, E2, E, L), !.
 parcours_liste_1([E1|P], E2, E, L):- parcours_liste_1(P, E2, E3, L2), compare_equation_1(E1, E3, E4, C), E=E4, append(C, L2, L), !.
 
 
+%Parcour de la liste des équations pour le choix pondéré 2
+%Si la liste à un seul élément, on compare les équations
+%Si la liste à plusieurs éléments, on compare les équations et on parcour la liste jusqu'à la fin
+parcours_liste_2([E1|[]], E2, E, L) :- compare_equation_2(E1, E2, E, L), !.
+parcours_liste_2([E1|P], E2, E, L):- parcours_liste_2(P, E2, E3, L2), compare_equation_2(E1, E3, E4, C), E=E4, append(C, L2, L), !.
 
-main :- unifie([f(Y)?=f(X), X?=a], choix_pondere_1).
+
+% Prédicats d'affichage fournis
+
+% set_echo: ce prédicat active l'affichage par le prédicat echo
+set_echo :- assert(echo_on).
+
+% clr_echo: ce prédicat inhibe l'affichage par le prédicat echo
+clr_echo :- retractall(echo_on).
+
+% echo(T): si le flag echo_on est positionné, echo(T) affiche le terme T
+%          sinon, echo(T) réussit simplement en ne faisant rien.
+echo(T) :- echo_on, !, write(T).
+echo(_).
+
+% trace_unif(P, S): trace_unif(P, S) affiche les étapes de la résolution de la liste d'équations P avec la stratégie S
+trace_unif(P, S) :- set_echo, echo('unifie('), echo(P), echo(').\n'), unifie(P, S), clr_echo.
+
+% unif(P, S): unif(P, S) indique si la liste d'équations P avec la stratégie S peut être résolue
+unif(P, S) :- clr_echo, unifie(P, S), !.
+
+main :- trace_unif([f(X,Y)?=f(g(Z),h(a)), Z?=f(Y)], choix_pondere_1).
 
 % Lance le programme
-:- trace, main.
+:- main.
