@@ -55,23 +55,23 @@ occur_check(X, T) :- compound(T), var(X), arg(_,T,V), (V==X ; (compound(V), occu
 
 % application de la regle rename
 % remplacement des occurrences de la variable X par la variable T
-reduit(rename, E, P, Q) :- echo('rename: '), echo(E), nl, regle(E, rename), arg(1, E, X), arg(2, E, T), Q=P, X=T, !.
+reduit(rename, E, P, Q) :- regle(E, rename), echo('rename: '), echo(E), nl, arg(1, E, X), arg(2, E, T), Q=P, X=T, !.
 
 % application de la regle simplify
 % remplacement des occurrences de la variable X par la constante T
-reduit(simplify, E, P, Q) :- echo('simplify: '), echo(E), nl, regle(E, simplify), arg(1, E, X), arg(2, E, T), X=T, Q=P, !.
+reduit(simplify, E, P, Q) :- regle(E, simplify), echo('simplify: '), echo(E), nl, arg(1, E, X), arg(2, E, T), X=T, Q=P, !.
 
 % application de la regle expand
 % remplacement des occurrences de la variable X par la fonction T
-reduit(expand, E, P, Q) :- echo('expand: '), echo(E), nl, regle(E, expand), arg(1, E, X), arg(2, E, T), X=T, Q=P, !.
+reduit(expand, E, P, Q) :- regle(E, expand), echo('expand: '), echo(E), nl, arg(1, E, X), arg(2, E, T), X=T, Q=P, !.
 
 % application de la regle orient
 % inverse T et X
-reduit(orient, E, P, Q) :- echo('orient: '), echo(E), nl, regle(E, orient), arg(1, E, T), arg(2, E, X), append([X?=T], P, Q), !.
+reduit(orient, E, P, Q) :- regle(E, orient), echo('orient: '), echo(E), nl, arg(1, E, T), arg(2, E, X), append([X?=T], P, Q), !.
 
 % application de la regle decompose
 % decompose les fonctions X et T en une liste d'équations
-reduit(decompose, E, P, Q) :- echo('decompose: '), echo(E), nl, regle(E, decompose), arg(1, E, X), arg(2, E, T), X=..[_|L], T=..[_|K], union_list(L, K, R), append(R, P, Q), !.
+reduit(decompose, E, P, Q) :- regle(E, decompose), echo('decompose: '), echo(E), nl, arg(1, E, X), arg(2, E, T), X=..[_|L], T=..[_|K], union_list(L, K, R), append(R, P, Q), !.
 
 % application de la regle clash
 reduit(clash, E, _, _) :- echo('clash: '), echo(E), nl, fail.
@@ -90,16 +90,16 @@ union_list([], [], C) :- C=[].
 % unifie(P, S) : P est un systeme d'équations à résoudre sous la forme d'une liste et S la stratégie utilisé pour le résoudre
 % unifie([]) : termine l'éxécution du programme
 
-unifie([E|P], choix_premier) :- choix_premier(P, Q, E, _), !, unifie(Q, choix_premier).
+unifie([E|P], choix_premier) :- echo('system:'), echo([E|P]), nl, choix_premier(P, Q, E, _), !, unifie(Q, choix_premier).
 unifie([E|P], choix_pondere_1) :- echo('system:'), echo([E|P]), nl, choix_pondere_1(P, Q, E, _), !, unifie(Q, choix_pondere_1).
 unifie([E|P], choix_pondere_2) :- echo('system:'), echo([E|P]), nl, choix_pondere_2(P, Q, E, _), !, unifie(Q, choix_pondere_2).
+unifie(P, choix_aleatoire) :- echo('system:'), echo(P), nl, choix_aleatoire(P, Q), !, unifie(Q, choix_aleatoire).
 
-
-unifie([], _) :- write('Yes').
+unifie([], _) :- write("L'unification est termine avec succes").
 
 %Unifie avec un seul parametre (choix_premier)
 unifie([E|P]) :- choix_premier(P, Q, E, _), !, unifie(Q).
-unifie([]) :- write('Yes').
+unifie([]) :- write("L'unification est termine avec succes").
 
 
 % Les différentes stratégies possibles pour le résolution de l'équation
@@ -119,6 +119,13 @@ choix_pondere_1(P, Q, E, R) :- parcours_liste_1(P, E, C, L), choix_reduit_1(C, R
 % choix pondéré 2
 choix_pondere_2([], Q, E, R) :- choix_reduit_2(E, R, _), reduit(R, E, [], Q).
 choix_pondere_2(P, Q, E, R) :- parcours_liste_2(P, E, C, L), choix_reduit_2(C, R, _), reduit(R, C, L, Q).
+
+%Choix de l'équation de façon aléatoire dans la liste
+%Si la liste à un seul élément, on choisit cette équation
+%Si la liste à plusieurs éléments, on choisit une équation aléatoirement
+choix_aleatoire([E|[]], Q) :- reduit(_, E, [], Q).
+choix_aleatoire(L, Q) :- random_select(E, L, R), reduit(_, E, R, Q).
+
 
 %Choix de la règle à appliquer avec poids
 %E représente l'équation à résoudre
@@ -185,7 +192,16 @@ trace_unif(P, S) :- set_echo, echo('unifie('), echo(P), echo(').\n'), unifie(P, 
 % unif(P, S): unif(P, S) indique si la liste d'équations P avec la stratégie S peut être résolue
 unif(P, S) :- clr_echo, unifie(P, S), !.
 
-main :- trace_unif([f(X,Y)?=f(g(Z),h(a)), Z?=f(Y)], choix_pondere_1).
+
+main :- write("Projet prolog Martelli-Montanari (Briot, Brancati)\n
+Pour lancer le programme vous avez le choix entre differentes commandes : \n
+- trace_unif([votre formule], strategie possible) : Affiche les traces d'execution de l'unification
+- unif([votre formule], strategie possible) : Affiche seulement le resultat de l'unification \n
+Les differentes strategies possibles sont :\n
+- choix_premier : choisi toujours la premiere equation de la liste
+- choix_pondere_1 : choisi les formules selon un poids defini (clash > check > rename > simplify > orient > expand > decompose)
+- choix_pondere_2 : choisi les formules selon un poids defini (clash > check > decompose > orient > rename > simplify > expand)
+- choix_aleatoire : choisi les equations de facon aleatoire").
 
 % Lance le programme
 :- main.
