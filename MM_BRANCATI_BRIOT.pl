@@ -23,7 +23,7 @@ regle(E, expand) :- arg(1, E, X), arg(2, E, T), compound(T), var(X), \+ occur_ch
 % check
 % regle (x?=t, check) : true si x =/= t et x apparait dans t
 % regle (x?=t, check) : false sinon
-regle(E, check) :- arg(1, E, X), arg(2, E, T), var(X), X \== T, !, occur_check(X,T).
+regle(E, check) :- arg(1, E, X), arg(2, E, T), var(X), X \== T, !, occur_check(X,T), !.
 
 % orient
 % regle (t?=x, orient) : true si x est une variable et t ne l'est pas
@@ -74,10 +74,10 @@ reduit(orient, E, P, Q) :- regle(E, orient), echo('orient: '), echo(E), nl, arg(
 reduit(decompose, E, P, Q) :- regle(E, decompose), echo('decompose: '), echo(E), nl, arg(1, E, X), arg(2, E, T), X=..[_|L], T=..[_|K], union_list(L, K, R), append(R, P, Q), !.
 
 % application de la regle clash
-reduit(clash, E, _, _) :- echo('clash: '), echo(E), nl, fail.
+reduit(clash, E, _, _) :- not(regle(E, clash)), echo('clash: '), echo(E), nl, !, fail.
 
 % application de la regle check
-reduit(check, E, _, _) :- echo('check: '), echo(E), nl, fail.
+reduit(check, E, _, _) :- not(regle(E, check)), echo('check: '), echo(E), nl, !, fail.
 
 % union_list
 % union des termes de deux listes pour appliquer la regle decompose
