@@ -38,7 +38,7 @@ regle(E, decompose) :- arg(1, E, X), arg(2, E, T), compound(X), compound(T), fun
 % clash
 % regle (x?=t, clash) : true si x et t sont des fonctions de même symbole et une arité différente ou x et t sont des fonctions de symboles différents
 % regle (x?=t, clash) : false sinon
-regle(E, clash) :- arg(1, E, X), arg(2, E, T), compound(X), compound(T), functor(X, N, A), functor(T, O, B), (N \== O ; A \== B), !.
+regle(E, clash) :- arg(1, E, X), arg(2, E, T), atomic(X), atomic(T), ! ; compound(X), compound(T), functor(X, N, A), functor(T, O, B), (N \== O ; A \== B), !.
 
 % clear
 % regle (x?=t, clear) : true si x et t sont des constantes de même symbole
@@ -81,10 +81,10 @@ reduit(decompose, E, P, Q) :- regle(E, decompose), echo('decompose: '), echo(E),
 reduit(clear, E, P, Q) :- regle(E, clear), echo('clear: '), echo(E), nl, Q=P, !.
 
 % application de la regle clash
-reduit(clash, E, _, _) :- not(regle(E, clash)), echo('clash: '), echo(E), nl, !, fail.
+reduit(clash, E, _, _) :- regle(E, clash), echo('clash: '), echo(E), nl, !, fail.
 
 % application de la regle check
-reduit(check, E, _, _) :- not(regle(E, check)), echo('check: '), echo(E), nl, !, fail.
+reduit(check, E, _, _) :- regle(E, check), echo('check: '), echo(E), nl, !, fail.
 
 % union_list
 % union des termes de deux listes pour appliquer la regle decompose
