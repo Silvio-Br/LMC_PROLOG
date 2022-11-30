@@ -38,7 +38,7 @@ regle(E, decompose) :- arg(1, E, X), arg(2, E, T), compound(X), compound(T), fun
 % clash
 % regle (x?=t, clash) : true si x et t sont des fonctions de même symbole et une arité différente ou x et t sont des fonctions de symboles différents
 % regle (x?=t, clash) : false sinon
-regle(E, clash) :- arg(1, E, X), arg(2, E, T), atomic(X), atomic(T), ! , arg(1, E, X), arg(2, E, T), functor(X, N, A), functor(X, N, A), functor(T, O, B), (N \== O ; A \== B), !.
+regle(E, clash) :- arg(1, E, X), arg(2, E, T), atomic(X), atomic(T), ! , arg(1, E, X), arg(2, E, T), functor(X, N, A), functor(T, O, B), (N \== O ; A \== B), !.
 
 % clear
 % regle (x?=t, clear) : true si x et t sont des constantes de même symbole
