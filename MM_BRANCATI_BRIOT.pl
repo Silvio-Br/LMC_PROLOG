@@ -30,7 +30,6 @@ regle(E, check) :- arg(1, E, X), arg(2, E, T), var(X), X \== T, !, occur_check(X
 % regle (t?=x, orient) : false sinon
 regle(E, orient) :- arg(1, E, T), arg(2, E, X), var(X), nonvar(T), !.
 
-
 % decompose
 % regle (x?=t, decompose) : true si x et t sont des fonctions de même symbole et la même arité
 % regle (x?=t, decompose) : false sinon
@@ -41,6 +40,10 @@ regle(E, decompose) :- arg(1, E, X), arg(2, E, T), compound(X), compound(T), fun
 % regle (x?=t, clash) : false sinon
 regle(E, clash) :- arg(1, E, X), arg(2, E, T), compound(X), compound(T), functor(X, N, A), functor(T, O, B), (N \== O ; A \== B), !.
 
+% clear
+% regle (x?=t, clear) : true si x et t sont des constantes de même symbole
+% regle (x?=t, clear) : false sinon
+regle(E, clear) :- arg(1, E, X), arg(2, E, T), atomic(X), atomic(T), X==T, !.
 
 % occur_check
 % occur_check(X, T) : true si X apparait dans T
@@ -72,6 +75,10 @@ reduit(orient, E, P, Q) :- regle(E, orient), echo('orient: '), echo(E), nl, arg(
 % application de la regle decompose
 % decompose les fonctions X et T en une liste d'équations
 reduit(decompose, E, P, Q) :- regle(E, decompose), echo('decompose: '), echo(E), nl, arg(1, E, X), arg(2, E, T), X=..[_|L], T=..[_|K], union_list(L, K, R), append(R, P, Q), !.
+
+% application de la regle clear
+% supprime l'équation E
+reduit(clear, E, P, Q) :- regle(E, clear), echo('clear: '), echo(E), nl, Q=P, !.
 
 % application de la regle clash
 reduit(clash, E, _, _) :- not(regle(E, clash)), echo('clash: '), echo(E), nl, !, fail.
@@ -132,7 +139,8 @@ choix_aleatoire(L, Q) :- random_select(E, L, R), reduit(_, E, R, Q).
 %P représente le poids de la règle
 
 % clash > check > rename > simplify > orient > expand > decompose
-choix_reduit_1(E, R, P):- regle(E, clash), P=7, R='clash', !;
+choix_reduit_1(E, R, P):- regle(E, clear), P=8, R='clear', !;
+regle(E, clash), P=7, R='clash', !;
 regle(E, check), P=6, R='check', !;
 regle(E, rename), P=5, R='rename', !;
 regle(E, simplify), P=4, R='simplify', !;
@@ -141,7 +149,8 @@ regle(E, expand), P=2, R='expand', !;
 regle(E, decompose), P=1, R='decompose', !.
 
 % clash > check > decompose > orient > rename > simplify > expand
-choix_reduit_2(E, R, P):- regle(E, clash), P=7, R='clash', !;
+choix_reduit_2(E, R, P):- regle(E, clear), P=8, R='clear', !;
+regle(E, clash), P=7, R='clash', !;
 regle(E, check), P=6, R='check', !;
 regle(E, decompose), P=5, R='decompose', !;
 regle(E, orient), P=4, R='orient', !;
